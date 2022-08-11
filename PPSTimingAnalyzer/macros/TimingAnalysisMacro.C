@@ -23,8 +23,9 @@ void TimingAnalysisMacro::Loop()
    Long64_t nentries = fChain->GetEntriesFast();
    Int_t nent = fChain->GetEntries();
 
-   //
-   Float_t cmtons = 1.0/15.0;
+   // Ideal correlation between vertex z position and PPS time difference should be c/2. 
+   // z is in cm, PPS time is in ns
+   Float_t cmtons = 1.0/14.989623;
 
    // Counters and PPS track variables
    Int_t npixeltracks45210, npixeltracks56210, ntimetracks45, ntimetracks56; 
@@ -45,6 +46,10 @@ void TimingAnalysisMacro::Loop()
 
    TH2F *zvtxvstimediff = new TH2F("zvtxvstimediff","zvtxvstimediff",100,-20,20,50,-3,3);
    TH1F *zminustimediff = new TH1F("zminustimediff","zminustimediff",500,-100,100);
+
+   TH2F *xx45 = new TH2F("xx45","xx45",50,0,25,50,0,25);
+   TH2F *xx56 = new TH2F("xx56","xx56",50,0,25,50,0,25);
+
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
