@@ -53,17 +53,34 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 # 2022 prompt: to be updated
 process.GlobalTag = GlobalTag(process.GlobalTag, "124X_dataRun3_Prompt_v4") 
 
+# Uncomment these lines for on-the-fly re-RECO from AOD
 # local RP reconstruction chain with standard settings                                                                                              
+#process.load("RecoPPS.Configuration.recoCTPPS_cff")
+#process.ctppsLocalTrackLiteProducer.includeDiamonds = cms.bool(True)
+#process.ctppsLocalTrackLiteProducer.includePixels = cms.bool(True)
+#process.ctppsLocalTrackLiteProducer.tagPixelTrack = cms.InputTag("ctppsPixelLocalTracks","","PPSTiming")
+#process.ctppsLocalTrackLiteProducer.tagDiamondTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming")
+#process.ctppsProtons.tagLocalTrackLite = cms.InputTag("ctppsLocalTrackLiteProducer","","PPSTiming")
 
 process.mydiamonds = cms.EDAnalyzer(
     'PPSTimingAnalyzer',
-    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits"),
-#    lhcInfoLabel = cms.string(''),
+    #    lhcInfoLabel = cms.string(''),
     verticesTag = cms.InputTag('offlinePrimaryVertices'),
     tracksTag = cms.InputTag('generalTracks'),
+    #
+    # Take PPS information from the existing Prompt RECO AOD
+    #
+    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits"),
     tagTrackLites = cms.InputTag( "ctppsLocalTrackLiteProducer"),
     ppsRecoProtonSingleRPTag = cms.InputTag("ctppsProtons", "singleRP"),
     ppsRecoProtonMultiRPTag = cms.InputTag("ctppsProtons", "multiRP"),
+    #
+    # Alternatively, uncomment these lines to take PPS information from on-the-fly re-RECO
+    #
+    #    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits","","PPSTiming"),                                                                                                        
+    #    tagTrackLites = cms.InputTag( "ctppsLocalTrackLiteProducer", "", "PPSTiming"), 
+    #    ppsRecoProtonSingleRPTag = cms.InputTag("ctppsProtons", "singleRP", "PPSTiming"),
+    #    ppsRecoProtonMultiRPTag = cms.InputTag("ctppsProtons", "multiRP", "PPSTiming"),
     maxVertices = cms.uint32(1),
     outfilename = cms.untracked.string( "output_ZeroBias.root" )
 )
@@ -75,8 +92,9 @@ process.hltFilter.TriggerResultsTag = cms.InputTag("TriggerResults","","HLT")
 process.hltFilter.HLTPaths = ['HLT_EphemeralZeroBias_*']
 
 process.ALL = cms.Path(
-#   for data:
     process.hltFilter * 
+    # Uncomment this line, to re-run the PPS local+proton reconstruction starting from AOD
+    #    process.recoCTPPS * 
     process.mydiamonds 
                        )
 
