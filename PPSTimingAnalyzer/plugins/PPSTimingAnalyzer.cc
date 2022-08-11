@@ -11,9 +11,8 @@
      [Notes on implementation]
 */
 //
-// Original Author:  Jonathan Jason Hollar
-//         Created:  Wed, 10 Aug 2022 13:58:57 GMT
-//
+// Simple ntuple maker for PPS timing detector studies. Runs on AOD, and writes flat ntuples with arrays of RecHit, local track, and proton object (if available) variables. 
+// Also saves information on central CMS vertices for low-pileup studies
 //
 
 // system include files

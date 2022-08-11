@@ -6,38 +6,30 @@
 
 void TimingAnalysisMacro::Loop()
 {
-//   In a ROOT session, you can do:
+// Macro for running on ntuples output from PPS timing analyzer, to perform a 2018-like study of the proton time 
+// difference vs. CMS vertex position. Output is a file containing histograms, that can be used for fitting the 
+// time resolution in 2-arm events. 
+//
+// Note - for 2022, until the proton object reconstruction is finalized, this works with local tracks
+//
+//   In a ROOT session:
 //      root> .L TimingAnalysisMacro.C
 //      root> TimingAnalysisMacro t
-//      root> t.GetEntry(12); // Fill t data members with entry number 12
-//      root> t.Show();       // Show values of entry 12
-//      root> t.Show(16);     // Read and show values of entry 16
 //      root> t.Loop();       // Loop on all entries
-//
 
-//     This is the loop skeleton where:
-//    jentry is the global entry number in the chain
-//    ientry is the entry number in the current Tree
-//  Note that the argument to GetEntry must be:
-//    jentry for TChain::GetEntry
-//    ientry for TTree::GetEntry and TBranch::GetEntry
-//
-//       To read only selected branches, Insert statements like:
-// METHOD1:
-//    fChain->SetBranchStatus("*",0);  // disable all branches
-//    fChain->SetBranchStatus("branchname",1);  // activate branchname
-// METHOD2: replace line
-//    fChain->GetEntry(jentry);       //read all branches
-//by  b_branchname->GetEntry(ientry); //read only this branch
+
    if (fChain == 0) return;
 
    Long64_t nentries = fChain->GetEntriesFast();
    Int_t nent = fChain->GetEntries();
 
+   //
+   Float_t cmtons = 1.0/15.0;
+
    // Counters and PPS track variables
    Int_t npixeltracks45210, npixeltracks56210, ntimetracks45, ntimetracks56; 
    Float_t pixelx45210, pixely45210, pixelx56210, pixely56210, timingx45, timingx56;
-   Float_t time45, time56;
+   Float_t time45, time56, timeunc45, timeunc56;
 
    // Histograms
    TH1F *dxpixelstiming45 = new TH1F("dxpixelstiming45","dxpixelstiming45",500,-10,10);
@@ -46,6 +38,13 @@ void TimingAnalysisMacro::Loop()
    TH2F *xypixels45 = new TH2F("xypixels45","xypixels45",500,0,30,500,-15,15);
    TH2F *xypixels56 = new TH2F("xypixels56","xypixels56",500,0,30,500,-15,15);
 
+   TH2F *timevstime = new TH2F("timevstime","timevstime",250,0,25,250,0,25);
+
+   TH1F *htimeunc45 = new TH1F("htimeunc45","htimeunc45",100,0,2);
+   TH1F *htimeunc56 = new TH1F("htimeunc56","htimeunc56",100,0,2);
+
+   TH2F *zvtxvstimediff = new TH2F("zvtxvstimediff","zvtxvstimediff",100,-20,20,50,-3,3);
+   TH1F *zminustimediff = new TH1F("zminustimediff","zminustimediff",500,-100,100);
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -74,6 +73,8 @@ void TimingAnalysisMacro::Loop()
       timingx56 = 0.0;
       time45 = -999.0;
       time56 = -999.0;
+      timeunc45 = -999.0;
+      timeunc56 = -999.0;
 
       // Loop over all of the local "lite" tracks in each Roman Pot station. 
       // Record the multiplicity, the x,y coordinates in the 210m pixel stations on sectors 45 (+z) and 56 (-z), 
@@ -100,12 +101,14 @@ void TimingAnalysisMacro::Loop()
             {
 	      timingx45 = TrackLiteX[ptrack];
 	      time45 = TrackLiteTime[ptrack];
+	      timeunc45 = TrackLiteTimeUnc[ptrack];
 	      ntimetracks45++;
             }
           if(TrackLiteRPID[ptrack] == 116)
             {
 	      timingx56 = TrackLiteX[ptrack];
 	      time56 = TrackLiteTime[ptrack];
+              timeunc56 = TrackLiteTimeUnc[ptrack];
 	      ntimetracks56++;
             }
 	}
@@ -113,11 +116,27 @@ void TimingAnalysisMacro::Loop()
       // For the final sample, use events with exactly 1 track in each of the 210m pixels, and 1 track in each of the diamonds
       if((npixeltracks45210==1) && (npixeltracks56210==1) && (ntimetracks45==1) && (ntimetracks56))
 	{
+	  // Time measurement on each arm
+	  timevstime->Fill(time45,time56);
+
+	  // Matching between x position of pixel and diamond tracks
 	  dxpixelstiming45->Fill(pixelx45210-timingx45);
 	  dxpixelstiming56->Fill(pixelx56210-timingx56);
 	  
+	  // 2d maps of pixel tracks
 	  xypixels45->Fill(pixelx45210,pixely45210);
 	  xypixels56->Fill(pixelx56210,pixely56210);
+
+	  // Scatter plot of vertex Z vs. proton time difference
+	  zvtxvstimediff->Fill(PrimVertexZ[0],time56-time45);
+	  // Projection of vertex Z minus proton time difference (converted from ns to cm)
+	  zminustimediff->Fill(PrimVertexZ[0] - (time56-time45)/cmtons);
+
+	  // Store the predicted track-by-track time uncertainties, based on which channels 
+	  // contribute to the track
+	  htimeunc45->Fill(timeunc45);
+          htimeunc56->Fill(timeunc56);
+
 	}
 
    }
@@ -127,6 +146,11 @@ void TimingAnalysisMacro::Loop()
    dxpixelstiming56->Write();
    xypixels45->Write();
    xypixels56->Write();
+   zvtxvstimediff->Write();
+   zminustimediff->Write();
+   htimeunc45->Write();
+   htimeunc56->Write();
+   timevstime->Write();
    fx->Close();
 
 
