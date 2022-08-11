@@ -121,25 +121,17 @@ private:
   Int_t BX, Run, LumiSection, EventNum;
   Float_t CrossingAngle;
 
-  Double_t TimingTrackT[100], TimingTrackTErr[100], TimingTrackX[100], TimingTrackY[100], TimingTrackZ[100], TimingTrackChi2[100];
   Double_t TimingRecHitT[100], TimingRecHitX[100], TimingRecHitY[100], TimingRecHitToT[100];
-  Int_t TimingTrackOOTIndex[100],TimingRecHitOOTIndex[100], TimingTrackMultiHit[100], TimingRecHitMultiHit[100], TimingTrackArm[100];
-  unsigned int TimingRecHitChannel[100], TimingRecHitArm[100], TimingRecHitPlane[100];
+  unsigned int TimingRecHitChannel[100], TimingRecHitArm[100], TimingRecHitPlane[100], TimingRecHitOOTIndex[100], TimingRecHitMultiHit[100];
 
   Int_t nVertices, nArmsTiming, nTracksTiming, nRecHitsTiming;
 
   Int_t nLiteTracks;
-  Float_t TrackLiteX[100], TrackLiteY[100], TrackLiteZ[100], TrackLiteTime[100];
+  Float_t TrackLiteX[100], TrackLiteY[100], TrackLiteZ[100], TrackLiteTime[100], TrackLiteTimeUnc[100];
   Int_t TrackLiteRPID[100], TrackLiteArm[100];
 
   Double_t PrimVertexZ[100], PrimVertexY[100], PrimVertexX[100];
-  Int_t PrimVertexIsBS[100];
-
-  Int_t nTracksNoVertex;
-  Int_t nTracksOneVertex;
-  Double_t TrackZNoVertex[500];
-  Double_t TrackPtOneVertex[500];
-  Double_t TrackEtaOneVertex[500];
+  Int_t PrimVertexIsBS[100], PrimVertexNtracks[100];
 
   Int_t nProtons;
   Float_t ProtonXi[100];
@@ -230,8 +222,6 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   nRecHitsTiming = 0;
   nLiteTracks = 0;
   nVertices = 0;
-  nTracksNoVertex = 0;
-  nTracksOneVertex = 0;
 
   // Initializing arrays                                                                                                                             
   for(int i = 0; i < 100; i++)
@@ -240,6 +230,7 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       PrimVertexX[i] = -999.;
       PrimVertexY[i] = -999.;
       PrimVertexIsBS[i] = -999;
+      PrimVertexNtracks[i] = -999;
 
       TimingRecHitT[i] = -999;
       TimingRecHitX[i] = -999;
@@ -264,14 +255,8 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       TrackLiteZ[i] = 0;
       TrackLiteArm[i] = 0;
       TrackLiteTime[i] = 0;
+      TrackLiteTimeUnc[i] = 0;
       TrackLiteRPID[i] = 0;
-    }
-
-  for(int i = 0; i < 500; i++)
-    {
-      TrackZNoVertex[i] = 0;
-      TrackPtOneVertex[i] = 0;
-      TrackEtaOneVertex[i] = 0;
     }
 
   /* RecHits - timing */
@@ -286,6 +271,9 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       TimingRecHitX[nRecHitsTiming] = rechit.x();
       TimingRecHitY[nRecHitsTiming] = rechit.y();
       TimingRecHitToT[nRecHitsTiming] = rechit.toT();
+      TimingRecHitOOTIndex[nRecHitsTiming] = rechit.ootIndex();                                                                       
+      TimingRecHitMultiHit[nRecHitsTiming] = rechit.multipleHits();
+
       nRecHitsTiming++;
     }
   }
@@ -304,6 +292,7 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       TrackLiteX[nLiteTracks] = trklite.x();
       TrackLiteY[nLiteTracks] = trklite.y();
       TrackLiteTime[nLiteTracks] = trklite.time();
+      TrackLiteTimeUnc[nLiteTracks] = trklite.timeUnc();
       TrackLiteRPID[nLiteTracks] = raw_id;
 
       if(raw_id == 3)
@@ -417,6 +406,7 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     PrimVertexZ[nVertices] = vtx.z();
     PrimVertexX[nVertices] = vtx.x();
     PrimVertexY[nVertices] = vtx.y();
+    PrimVertexNtracks[nVertices] = vtx.nTracks(0);
 
     if(vtx.isFake() == 1)
       PrimVertexIsBS[nVertices] = 1;
@@ -424,29 +414,6 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       PrimVertexIsBS[nVertices] = 0;
     nVertices++;
   }
-
-
-  /* Tracks if no real vertex found, just in case this is useful */
-  if(nVertices <= 1)
-    {
-      if(PrimVertexIsBS[0] == 1)
-        {
-          for( const auto& tk : *tks )
-            {
-              TrackZNoVertex[nTracksNoVertex] = tk.vertex().z();
-              nTracksNoVertex++;
-            }
-        }
-      if(PrimVertexIsBS[0] == 0)
-        {
-          for( const auto& tk : *tks )
-            {
-              TrackPtOneVertex[nTracksOneVertex] = tk.pt();
-              TrackEtaOneVertex[nTracksOneVertex] = tk.eta();
-              nTracksOneVertex++;
-            }
-        }
-    }
 
   tree->Fill();
 }
@@ -469,22 +436,23 @@ void PPSTimingAnalyzer::beginJob() {
   tree->Branch("TimingRecHitX",&TimingRecHitX,"TimingRecHitX[nRecHitsTiming]/D");
   tree->Branch("TimingRecHitY",&TimingRecHitY,"TimingRecHitY[nRecHitsTiming]/D");
   tree->Branch("TimingRecHitToT",&TimingRecHitToT,"TimingRecHitToT[nRecHitsTiming]/D");
-  //  tree->Branch("TimingRecHitOOTIndex",&TimingRecHitOOTIndex,"TimingRecHitOOTIndex[nRecHitsTiming]/I");                                             
-  //  tree->Branch("TimingRecHitMultiHit",&TimingRecHitMultiHit,"TimingRecHitMultiHit[nRecHitsTiming]/I");                                             
-
-  tree->Branch("nVertices", &nVertices, "nVertices/I");
+  tree->Branch("TimingRecHitOOTIndex",&TimingRecHitOOTIndex,"TimingRecHitOOTIndex[nRecHitsTiming]/I");                                      
+  tree->Branch("TimingRecHitMultiHit",&TimingRecHitMultiHit,"TimingRecHitMultiHit[nRecHitsTiming]/I");                                      
 
   tree->Branch("nLiteTracks", &nLiteTracks, "nLiteTracks/I");
   tree->Branch("TrackLiteX", &TrackLiteX, "TrackLiteX[nLiteTracks]/F");
   tree->Branch("TrackLiteY", &TrackLiteY, "TrackLiteY[nLiteTracks]/F");
   tree->Branch("TrackLiteZ", &TrackLiteZ, "TrackLiteZ[nLiteTracks]/F");
   tree->Branch("TrackLiteTime", &TrackLiteTime, "TrackLiteTime[nLiteTracks]/F");
+  tree->Branch("TrackLiteTimeUnc", &TrackLiteTimeUnc, "TrackLiteTimeUnc[nLiteTracks]/F");
   tree->Branch("TrackLiteRPID", &TrackLiteRPID, "TrackLiteRPID[nLiteTracks]/I");
   tree->Branch("TrackLiteArm", &TrackLiteArm, "TrackLiteArm[nLiteTracks]/I");
 
+  tree->Branch("nVertices", &nVertices, "nVertices/I");
   tree->Branch("PrimVertexZ", &PrimVertexZ, "PrimVertexZ[nVertices]/D");
   tree->Branch("PrimVertexX", &PrimVertexX, "PrimVertexX[nVertices]/D");
   tree->Branch("PrimVertexY", &PrimVertexY, "PrimVertexY[nVertices]/D");
+  tree->Branch("PrimVertexNtracks", &PrimVertexNtracks, "PrimVertexNtracks[nVertices]/I");
   tree->Branch("PrimVertexIsBS", &PrimVertexIsBS, "PrimVertexIsBS[nVertices]/I");
 
   tree->Branch("nProtons", &nProtons, "nProtons/I");
