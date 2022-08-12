@@ -24,11 +24,12 @@ cmsRun RunTimingAnalysis_cfg.py
      To change this to re-RECO on-the-fly from the AOD, see the comments in the cfg file.
 
 ---------------------------------------------------
-Macros for producing plots and resolution fits
+Macros for producing histograms and resolution fits
 ---------------------------------------------------
 
    * To run over the ntuples output by the step above, apply an event 
-     selection similar to the 2018 timing studies, and output histograms: 
+     selection similar to the 2018 timing studies (=1 low-multiplicity vertex in the CMS tracker, 
+     and 1 proton track+timing measurement on each arm of PPS), and output histograms: 
 
 cd CMSSW_12_4_6/src/PPSTimingAnalyzer/PPSTimingAnalyzer/macros
 
@@ -38,10 +39,21 @@ root -l TimingAnalysisMacro.C
 
 [1] t.Loop()
 
-   * For commissioning, this is temporarily set to work using local ("Lite") PPS tracks, rather than the full 
+   * The list of ntuples to run over is defined in TimingAnalysisMacro.h
+
+   * A simple fitting macro used for 2018 studies can run on the histograms, and produce the vertex resolution 
+     fit derived from the PPS timing measurements:
+
+PPSTimingAnalyzer/PPSTimingAnalyzer/macros/FitSpaceResFromTiming.C
+
+---------------------------------------------------
+Notes
+---------------------------------------------------
+
+   * For commissioning, the macros are currently set up to work using local ("Lite") PPS tracks, rather than the full 
      proton object. The list of ntuples to run over is defined in TimingAnalysisMacro.h
 
-   * Finally, a simple fitting macro can run on the histograms, and produce a vertex resolution based 
-     on the timing measurements: 
+   * For proton tracking, only the 210m pixel stations are considered, pending updates to the reconstruction for the 220m pixels
 
-PPSTimingAnalyzer/PPSTimingAnalyzer/macros/FitSpaceResFromTiming.C  
+   * In the fitting macro, all the initial values, ranges, and event-mixing background parameters are just copied 
+     from 2018 and will need to be updated
