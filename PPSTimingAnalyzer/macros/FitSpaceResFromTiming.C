@@ -3,7 +3,7 @@
  */
 void FitSpaceResFromTiming(Int_t bkgmode = 0)
 {
-  TFile *f1 = TFile::Open("OuptutTimingHistograms.root");
+  TFile *f1 = TFile::Open("TimingHistograms.root");
 
   TH1F *h1;
   h1 = (TH1F *)f1->Get("zminustimediff");

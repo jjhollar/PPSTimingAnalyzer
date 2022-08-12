@@ -50,6 +50,7 @@ void TimingAnalysisMacro::Loop()
    TH2F *xx45 = new TH2F("xx45","xx45",50,0,25,50,0,25);
    TH2F *xx56 = new TH2F("xx56","xx56",50,0,25,50,0,25);
 
+   TH2F *channeltimes = new TH2F("channeltimes","channeltimes",96,0,96,350,-10,25);
 
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
@@ -127,6 +128,10 @@ void TimingAnalysisMacro::Loop()
 	  // Matching between x position of pixel and diamond tracks
 	  dxpixelstiming45->Fill(pixelx45210-timingx45);
 	  dxpixelstiming56->Fill(pixelx56210-timingx56);
+
+	  // 2d correlation of x position in pixels and x position in diamonds
+	  xx45->Fill(pixelx45210,timingx45);
+	  xx56->Fill(pixelx56210,timingx56);
 	  
 	  // 2d maps of pixel tracks
 	  xypixels45->Fill(pixelx45210,pixely45210);
@@ -144,11 +149,25 @@ void TimingAnalysisMacro::Loop()
 
 	}
 
+      // Finally, to check the channel-by-channel time alignment, just plot the RecHit arrival time for 
+      // each channel with no selection
+      for(Int_t rh = 0; rh < nRecHitsTiming; rh++)
+	{
+	  // Unroll arms/planes/channels into a single histogram
+	  Int_t num = (48*TimingRecHitArm[rh]) + (12*TimingRecHitPlane[rh]) + (TimingRecHitChannel[rh]);
+
+	  // Plot events with a reasonable Time-over-threshold
+	  if(TimingRecHitToT[rh] > 0 && TimingRecHitToT[rh] < 25)
+	    channeltimes->Fill(num,TimingRecHitT[rh]);
+	}
+
    }
 
-   TFile *fx = new TFile("OuptutTimingHistograms.root","RECREATE");
+   TFile *fx = new TFile("TimingHistograms.root","RECREATE");
    dxpixelstiming45->Write();
    dxpixelstiming56->Write();
+   xx45->Write();
+   xx56->Write();
    xypixels45->Write();
    xypixels56->Write();
    zvtxvstimediff->Write();
@@ -156,6 +175,7 @@ void TimingAnalysisMacro::Loop()
    htimeunc45->Write();
    htimeunc56->Write();
    timevstime->Write();
+   channeltimes->Write();
    fx->Close();
 
 
