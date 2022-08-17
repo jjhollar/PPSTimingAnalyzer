@@ -2,7 +2,7 @@
 import FWCore.ParameterSet.Config as cms
 import copy
 
-process = cms.Process('PPSTiming')
+process = cms.Process('PPSTiming2')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -17,8 +17,6 @@ process.maxEvents = cms.untracked.PSet(
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = ''
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
-
-
 
 
 process.source = cms.Source ("PoolSource",
@@ -44,23 +42,36 @@ process.source = cms.Source ("PoolSource",
                                  'file:/eos/cms/tier0/store/data/Run2022C/EphemeralZeroBias7/AOD/PromptReco-v1/000/355/933/00000/f18ade9e-a251-4655-961b-dca5f6f2d5a8.root',
                                  'file:/eos/cms/tier0/store/data/Run2022C/EphemeralZeroBias7/AOD/PromptReco-v1/000/355/933/00000/f94939f0-16cb-4627-978b-cde4d6f6ec0e.root',
                                  'file:/eos/cms/tier0/store/data/Run2022C/EphemeralZeroBias7/AOD/PromptReco-v1/000/355/933/00000/f94b2c62-7b13-4531-98c3-b0d27c3b68c9.root'
+                        )
+)
 
-        )
-                             )
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
-# 2022 prompt: to be updated
-process.GlobalTag = GlobalTag(process.GlobalTag, "124X_dataRun3_Prompt_v4") 
+from Configuration.StandardSequences.FrontierConditions_GlobalTag_cff import GlobalTag
+process.GlobalTag.globaltag = '124X_dataRun3_Prompt_frozen_v4'
+process.GlobalTag.toGet = cms.VPSet()
 
-# Uncomment these lines for on-the-fly re-RECO from AOD
-# local RP reconstruction chain with standard settings                                                                                              
-#process.load("RecoPPS.Configuration.recoCTPPS_cff")
-#process.ctppsLocalTrackLiteProducer.includeDiamonds = cms.bool(True)
-#process.ctppsLocalTrackLiteProducer.includePixels = cms.bool(True)
-#process.ctppsLocalTrackLiteProducer.tagPixelTrack = cms.InputTag("ctppsPixelLocalTracks","","PPSTiming")
-#process.ctppsLocalTrackLiteProducer.tagDiamondTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming")
-#process.ctppsProtons.tagLocalTrackLite = cms.InputTag("ctppsLocalTrackLiteProducer","","PPSTiming")
+# JH: recipe from C. Misan to pick up new timing calibrations                                                                                                                                       
+process.GlobalTag.toGet=cms.VPSet(
+  cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
+           tag = cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v0_prompt"),
+           label = cms.untracked.string('PPSTestCalibration'),
+           connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+          )
+)
+
+
+# JH - rerun reco sequence with new timing conditions                                                                                                                   
+process.load("RecoPPS.Configuration.recoCTPPS_cff")
+process.ctppsDiamondRecHits.timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration")
+
+process.ctppsDiamondLocalTracks.recHitsTag = cms.InputTag("ctppsDiamondRecHits","","PPSTiming2")
+process.ctppsLocalTrackLiteProducer.tagDiamondTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming2")
+process.ctppsProtons.tagLocalTrackLite = cms.InputTag("ctppsLocalTrackLiteProducer","","PPSTiming2")
+process.ctppsLocalTrackLiteProducer.includeDiamonds = cms.bool(True)
+process.ctppsLocalTrackLiteProducer.includePixels = cms.bool(True)
+
 
 process.mydiamonds = cms.EDAnalyzer(
     'PPSTimingAnalyzer',
@@ -70,17 +81,17 @@ process.mydiamonds = cms.EDAnalyzer(
     #
     # Take PPS information from the existing Prompt RECO AOD
     #
-    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits"),
-    tagTrackLites = cms.InputTag( "ctppsLocalTrackLiteProducer"),
-    ppsRecoProtonSingleRPTag = cms.InputTag("ctppsProtons", "singleRP"),
-    ppsRecoProtonMultiRPTag = cms.InputTag("ctppsProtons", "multiRP"),
-    #
+    #    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits"),
+    #    tagTrackLites = cms.InputTag( "ctppsLocalTrackLiteProducer"),
+    #    ppsRecoProtonSingleRPTag = cms.InputTag("ctppsProtons", "singleRP"),
+    #    ppsRecoProtonMultiRPTag = cms.InputTag("ctppsProtons", "multiRP"),
+    #    #
     # Alternatively, uncomment these lines to take PPS information from on-the-fly re-RECO
     #
-    #    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits","","PPSTiming"),                                                                                                        
-    #    tagTrackLites = cms.InputTag( "ctppsLocalTrackLiteProducer", "", "PPSTiming"), 
-    #    ppsRecoProtonSingleRPTag = cms.InputTag("ctppsProtons", "singleRP", "PPSTiming"),
-    #    ppsRecoProtonMultiRPTag = cms.InputTag("ctppsProtons", "multiRP", "PPSTiming"),
+    tagDiamondRecHits = cms.InputTag("ctppsDiamondRecHits","","PPSTiming2"),                                               
+    tagTrackLites = cms.InputTag( "ctppsLocalTrackLiteProducer", "", "PPSTiming2"), 
+    ppsRecoProtonSingleRPTag = cms.InputTag("ctppsProtons", "singleRP", "PPSTiming2"),
+    ppsRecoProtonMultiRPTag = cms.InputTag("ctppsProtons", "multiRP", "PPSTiming2"),
     maxVertices = cms.uint32(1),
     outfilename = cms.untracked.string( "output_ZeroBias.root" )
 )
@@ -93,10 +104,14 @@ process.hltFilter.HLTPaths = ['HLT_EphemeralZeroBias_*']
 
 process.ALL = cms.Path(
     process.hltFilter * 
-    # Uncomment this line, to re-run the PPS local+proton reconstruction starting from AOD
-    #    process.recoCTPPS * 
+    # Uncomment these lines, to re-run the PPS local+proton timing reconstruction starting from AOD
+    process.ctppsDiamondRecHits *
+    process.ctppsDiamondLocalTracks *
+    process.ctppsLocalTrackLiteProducer *
+    process.ctppsProtons *
     process.mydiamonds 
                        )
 
 process.schedule = cms.Schedule(process.ALL)
 
+#print(process.dumpPython())
