@@ -52,15 +52,14 @@ from Configuration.StandardSequences.FrontierConditions_GlobalTag_cff import Glo
 process.GlobalTag.globaltag = '124X_dataRun3_Prompt_frozen_v4'
 process.GlobalTag.toGet = cms.VPSet()
 
-# JH: recipe from C. Misan to pick up new timing calibrations                                                                                                                                       
+# JH: recipe from C. Misan to pick up new timing calibrations                                                                                                                           
 process.GlobalTag.toGet=cms.VPSet(
   cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
-           tag = cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v0_prompt"),
+           tag = cms.string("PPSDiamondTimingCalibration_Run3_recovered_v1"),
            label = cms.untracked.string('PPSTestCalibration'),
-           connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+           connect = cms.string("frontier://FrontierPrep/CMS_CONDITIONS")
           )
 )
-
 
 # JH - rerun reco sequence with new timing conditions                                                                                                                   
 process.load("RecoPPS.Configuration.recoCTPPS_cff")
