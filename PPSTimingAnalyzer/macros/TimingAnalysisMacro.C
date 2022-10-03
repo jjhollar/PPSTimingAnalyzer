@@ -120,7 +120,7 @@ void TimingAnalysisMacro::Loop()
 	}
 
       // For the final sample, use events with exactly 1 track in each of the 210m pixels, and 1 track in each of the diamonds
-      if((npixeltracks45210==1) && (npixeltracks56210==1) && (ntimetracks45==1) && (ntimetracks56))
+      if((npixeltracks45210==1) && (npixeltracks56210==1) && (ntimetracks45==1) && (ntimetracks56==1))
 	{
 	  // Time measurement on each arm
 	  timevstime->Fill(time45,time56);
