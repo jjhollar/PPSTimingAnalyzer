@@ -12,16 +12,18 @@ cmsenv
 
 git clone git@github.com:jjhollar/PPSTimingAnalyzer.git
 
-cd PPSTimingAnalyzer
+git clone git@github.com:jjhollar/RecoPPS.git
 
 scram b
 
-cd PPSTimingAnalyzer/test
+cd PPSTimingAnalyzer/PPSTimingAnalyzer/test
 
 cmsRun RunTimingAnalysis_cfg.py
 
-   * By default, this runs on existing collections from the AOD, and keeps only events with 1 vertex. 
-     To change this to re-RECO on-the-fly from the AOD, see the comments in the cfg file.
+   * By default, this does a re-RECO on-the-fly from the AOD, and keeps only events with 1 vertex.
+     The re-RECO applies more recent time alignment corrections, and also performs the special 2-plane 
+     pixel track reconstruction for the 220m stations. 
+     To change this to use the existing collections from the AOD, see the comments in the cfg file.
 
 ---------------------------------------------------
 Macros for producing histograms and resolution fits
@@ -53,7 +55,8 @@ Notes
    * For commissioning, the macros are currently set up to work using local ("Lite") PPS tracks, rather than the full 
      proton object. The list of ntuples to run over is defined in TimingAnalysisMacro.h
 
-   * For proton tracking, only the 210m pixel stations are considered, pending updates to the reconstruction for the 220m pixels
+   * For proton tracking, only the 210m pixel stations are considered by default in the macro.
+     With the 2-plane tracking, the 220m pixels could also be included.
 
    * In the fitting macro, all the initial values, ranges, and event-mixing background parameters are just copied 
      from 2018 and will need to be updated
