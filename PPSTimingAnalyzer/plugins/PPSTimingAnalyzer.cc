@@ -121,7 +121,7 @@ private:
   Float_t CrossingAngle;
 
   Double_t TimingRecHitT[100], TimingRecHitX[100], TimingRecHitY[100], TimingRecHitToT[100];
-  unsigned int TimingRecHitChannel[100], TimingRecHitArm[100], TimingRecHitPlane[100], TimingRecHitOOTIndex[100], TimingRecHitMultiHit[100];
+  unsigned int TimingRecHitChannel[100], TimingRecHitArm[100], TimingRecHitPlane[100], TimingRecHitStation[100], TimingRecHitOOTIndex[100], TimingRecHitMultiHit[100];
 
   Int_t nVertices, nArmsTiming, nTracksTiming, nRecHitsTiming;
 
@@ -240,6 +240,7 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       TimingRecHitChannel[i] = -999;
       TimingRecHitArm[i] = -999;
       TimingRecHitPlane[i] = -999;
+      TimingRecHitStation[i] = -999;
 
       ProtonXi[i] = -999;
       ProtonThY[i] = -999;
@@ -266,6 +267,7 @@ void PPSTimingAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       TimingRecHitArm[nRecHitsTiming] = detidforrh.arm();
       TimingRecHitChannel[nRecHitsTiming] = detidforrh.channel();
       TimingRecHitPlane[nRecHitsTiming] = detidforrh.plane();
+      TimingRecHitStation[nRecHitsTiming] = detidforrh.station();
       TimingRecHitT[nRecHitsTiming] = rechit.time();
       TimingRecHitX[nRecHitsTiming] = rechit.x();
       TimingRecHitY[nRecHitsTiming] = rechit.y();
@@ -431,6 +433,7 @@ void PPSTimingAnalyzer::beginJob() {
   tree->Branch("TimingRecHitArm",&TimingRecHitArm,"TimingRecHitArm[nRecHitsTiming]/I");
   tree->Branch("TimingRecHitChannel",&TimingRecHitChannel,"TimingRecHitChannel[nRecHitsTiming]/I");
   tree->Branch("TimingRecHitPlane",&TimingRecHitPlane,"TimingRecHitPlane[nRecHitsTiming]/I");
+  tree->Branch("TimingRecHitStation",&TimingRecHitStation,"TimingRecHitStation[nRecHitsTiming]/I");
   tree->Branch("TimingRecHitT",&TimingRecHitT,"TimingRecHitT[nRecHitsTiming]/D");
   tree->Branch("TimingRecHitX",&TimingRecHitX,"TimingRecHitX[nRecHitsTiming]/D");
   tree->Branch("TimingRecHitY",&TimingRecHitY,"TimingRecHitY[nRecHitsTiming]/D");
