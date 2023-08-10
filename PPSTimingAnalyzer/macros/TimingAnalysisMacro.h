@@ -30,6 +30,7 @@ public :
    Int_t           TimingRecHitArm[48];   //[nRecHitsTiming]
    Int_t           TimingRecHitChannel[48];   //[nRecHitsTiming]
    Int_t           TimingRecHitPlane[48];   //[nRecHitsTiming]
+   Int_t           TimingRecHitStation[48];   //[nRecHitsTiming]                                                                  
    Double_t        TimingRecHitT[48];   //[nRecHitsTiming]
    Double_t        TimingRecHitX[48];   //[nRecHitsTiming]
    Double_t        TimingRecHitY[48];   //[nRecHitsTiming]
@@ -70,6 +71,7 @@ public :
    TBranch        *b_TimingRecHitArm;   //!
    TBranch        *b_TimingRecHitChannel;   //!
    TBranch        *b_TimingRecHitPlane;   //!
+   TBranch        *b_TimingRecHitStation;   //!                                                                                   
    TBranch        *b_TimingRecHitT;   //!
    TBranch        *b_TimingRecHitX;   //!
    TBranch        *b_TimingRecHitY;   //!
@@ -192,6 +194,7 @@ void TimingAnalysisMacro::Init(TTree *tree)
    fChain->SetBranchAddress("TimingRecHitArm", TimingRecHitArm, &b_TimingRecHitArm);
    fChain->SetBranchAddress("TimingRecHitChannel", TimingRecHitChannel, &b_TimingRecHitChannel);
    fChain->SetBranchAddress("TimingRecHitPlane", TimingRecHitPlane, &b_TimingRecHitPlane);
+   fChain->SetBranchAddress("TimingRecHitStation", TimingRecHitStation, &b_TimingRecHitStation);
    fChain->SetBranchAddress("TimingRecHitT", TimingRecHitT, &b_TimingRecHitT);
    fChain->SetBranchAddress("TimingRecHitX", TimingRecHitX, &b_TimingRecHitX);
    fChain->SetBranchAddress("TimingRecHitY", TimingRecHitY, &b_TimingRecHitY);

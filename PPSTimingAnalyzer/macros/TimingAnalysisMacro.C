@@ -28,8 +28,9 @@ void TimingAnalysisMacro::Loop()
    Float_t cmtons = 1.0/14.989623;
 
    // Counters and PPS track variables
-   Int_t npixeltracks45210, npixeltracks56210, ntimetracks45, ntimetracks56; 
+   Int_t npixeltracks45210, npixeltracks56210, npixeltracks45220, npixeltracks56220, ntimetracks45, ntimetracks56; 
    Float_t pixelx45210, pixely45210, pixelx56210, pixely56210, timingx45, timingx56;
+   Float_t pixelx45220, pixely45220, pixelx56220, pixely56220;
    Float_t time45, time56, timeunc45, timeunc56;
 
    // Histograms
@@ -68,6 +69,8 @@ void TimingAnalysisMacro::Loop()
 
       npixeltracks45210 = 0;
       npixeltracks56210 = 0;
+      npixeltracks45220 = 0;
+      npixeltracks56220 = 0;
       ntimetracks45 = 0;
       ntimetracks56 = 0;
 
@@ -75,6 +78,10 @@ void TimingAnalysisMacro::Loop()
       pixely45210 = 0.0;
       pixelx56210 = 0.0;
       pixelx56210 = 0.0;
+      pixelx45220 = 0.0;
+      pixely45220 = 0.0;
+      pixelx56220 = 0.0;
+      pixelx56220 = 0.0;
       timingx45 = 0.0;
       timingx56 = 0.0;
       time45 = -999.0;
@@ -101,6 +108,18 @@ void TimingAnalysisMacro::Loop()
               pixely56210 = TrackLiteY[ptrack];
 	      npixeltracks56210++;
             }
+          if(TrackLiteRPID[ptrack] == 23)
+            {
+              pixelx45220 = TrackLiteX[ptrack];
+              pixely45220 = TrackLiteY[ptrack];
+              npixeltracks45220++;
+            }
+          if(TrackLiteRPID[ptrack] == 123)
+            {
+              pixelx56220 = TrackLiteX[ptrack];
+              pixely56220 = TrackLiteY[ptrack];
+              npixeltracks56220++;
+            }
 	  
 	  // Diamonds have only x segmentation, and the time measurement
           if(TrackLiteRPID[ptrack] == 16)
@@ -120,7 +139,8 @@ void TimingAnalysisMacro::Loop()
 	}
 
       // For the final sample, use events with exactly 1 track in each of the 210m pixels, and 1 track in each of the diamonds
-      if((npixeltracks45210==1) && (npixeltracks56210==1) && (ntimetracks45==1) && (ntimetracks56==1))
+      if((npixeltracks45220==1) && (npixeltracks56220==1) && (npixeltracks45210==1) && (npixeltracks56210==1) && 
+	 (ntimetracks45==1) && (ntimetracks56==1))
 	{
 	  // Time measurement on each arm
 	  timevstime->Fill(time45,time56);
