@@ -1,12 +1,13 @@
 # PPSTimingAnalyzer
 
 ---------------------------------------------------
-Producing ntuples from AOD (tested in CMSSW_12_4_6)
+Producing ntuples from AOD (tested in CMSSW_13_0_9)
+ - Updated August 11, 2023 for 2023 Low-PU data
 ---------------------------------------------------
 
-cmsrel CMSSW_12_4_6
+cmsrel CMSSW_13_0_9
 
-cd CMSSW_12_4_6/src
+cd CMSSW_13_0_9/src
 
 cmsenv
 
@@ -21,9 +22,8 @@ cd PPSTimingAnalyzer/PPSTimingAnalyzer/test
 cmsRun RunTimingAnalysis_cfg.py
 
    * By default, this does a re-RECO on-the-fly from the AOD, and keeps only events with 1 vertex.
-     The re-RECO applies more recent time alignment corrections, and also performs the special 2-plane 
-     pixel track reconstruction for the 220m stations. 
      To change this to use the existing collections from the AOD, see the comments in the cfg file.
+     To pick up new test calibrations from an sqlite file, see the comments in the cfg file
 
 ---------------------------------------------------
 Macros for producing histograms and resolution fits
@@ -33,7 +33,7 @@ Macros for producing histograms and resolution fits
      selection similar to the 2018 timing studies (=1 low-multiplicity vertex in the CMS tracker, 
      and 1 proton track+timing measurement on each arm of PPS), and output histograms: 
 
-cd CMSSW_12_4_6/src/PPSTimingAnalyzer/PPSTimingAnalyzer/macros
+cd CMSSW_13_0_9/src/PPSTimingAnalyzer/PPSTimingAnalyzer/macros
 
 root -l TimingAnalysisMacro.C
 
@@ -55,8 +55,12 @@ Notes
    * For commissioning, the macros are currently set up to work using local ("Lite") PPS tracks, rather than the full 
      proton object. The list of ntuples to run over is defined in TimingAnalysisMacro.h
 
-   * For proton tracking, only the 210m pixel stations are considered by default in the macro.
-     With the 2-plane tracking, the 220m pixels could also be included.
+   * Previously in 2022 the 220m pixel stations were ignored due to problems. Now the macro requires 
+     pixel tracks in both 210+220. In order to go back to 2022 data, this should be changed. 
+
+   * The macro now considers both cylindrical and box timing RPs. For the 2-arm selection, currently 
+     the time difference is made separately for the combinations cylindrical-cylindrical and box-box. 
+     When running on 2022 or older data, the box stations did not exist so these values will not be filled.     
 
    * In the fitting macro, all the initial values, ranges, and event-mixing background parameters are just copied 
      from 2018 and will need to be updated
