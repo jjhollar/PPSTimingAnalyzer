@@ -28,19 +28,24 @@ void TimingAnalysisMacro::Loop()
    Float_t cmtons = 1.0/14.989623;
 
    // Counters and PPS track variables
-   Int_t npixeltracks45210, npixeltracks56210, npixeltracks45220, npixeltracks56220, ntimetracks45, ntimetracks56; 
+   Int_t npixeltracks45210, npixeltracks56210, npixeltracks45220, npixeltracks56220;
+   Int_t ntimetracks45, ntimetracks56, ntimetracksbox45, ntimetracksbox56; 
    Float_t pixelx45210, pixely45210, pixelx56210, pixely56210, timingx45, timingx56;
-   Float_t pixelx45220, pixely45220, pixelx56220, pixely56220;
-   Float_t time45, time56, timeunc45, timeunc56;
+   Float_t pixelx45220, pixely45220, pixelx56220, pixely56220, timingxbox45, timingxbox56;
+   Float_t time45, time56, timeunc45, timeunc56, timebox45, timebox56, timeuncbox45, timeuncbox56;
 
    // Histograms
    TH1F *dxpixelstiming45 = new TH1F("dxpixelstiming45","dxpixelstiming45",500,-10,10);
    TH1F *dxpixelstiming56 = new TH1F("dxpixelstiming56","dxpixelstiming56",500,-10,10);
 
+   TH1F *dxpixelstimingbox45 = new TH1F("dxpixelstimingbox45","dxpixelstimingbox45",500,-10,10);
+   TH1F *dxpixelstimingbox56 = new TH1F("dxpixelstimingbox56","dxpixelstimingbox56",500,-10,10);
+
    TH2F *xypixels45 = new TH2F("xypixels45","xypixels45",500,0,30,500,-15,15);
    TH2F *xypixels56 = new TH2F("xypixels56","xypixels56",500,0,30,500,-15,15);
 
    TH2F *timevstime = new TH2F("timevstime","timevstime",250,0,25,250,0,25);
+   TH2F *timevstimebox = new TH2F("timevstimebox","timevstimebox",250,0,25,250,0,25);
 
    TH1F *htimeunc45 = new TH1F("htimeunc45","htimeunc45",100,0,2);
    TH1F *htimeunc56 = new TH1F("htimeunc56","htimeunc56",100,0,2);
@@ -48,8 +53,18 @@ void TimingAnalysisMacro::Loop()
    TH2F *zvtxvstimediff = new TH2F("zvtxvstimediff","zvtxvstimediff",100,-20,20,50,-3,3);
    TH1F *zminustimediff = new TH1F("zminustimediff","zminustimediff",500,-100,100);
 
+   TH1F *htimeuncbox45 = new TH1F("htimeuncbox45","htimeuncbox45",100,0,2);
+   TH1F *htimeuncbox56 = new TH1F("htimeuncbox56","htimeuncbox56",100,0,2);
+
+   TH2F *zvtxvstimediffbox = new TH2F("zvtxvstimediffbox","zvtxvstimediffbox",100,-20,20,50,-3,3);
+   TH1F *zminustimediffbox = new TH1F("zminustimediffbox","zminustimediffbox",500,-100,100);
+
    TH2F *xx45 = new TH2F("xx45","xx45",50,0,25,50,0,25);
    TH2F *xx56 = new TH2F("xx56","xx56",50,0,25,50,0,25);
+
+   TH2F *xxbox45 = new TH2F("xxbox45","xxbox45",50,0,25,50,0,25);
+   TH2F *xxbox56 = new TH2F("xxbox56","xxbox56",50,0,25,50,0,25);
+
 
    TH2F *channeltimes = new TH2F("channeltimes","channeltimes",96,0,96,350,-10,25);
 
@@ -63,6 +78,10 @@ void TimingAnalysisMacro::Loop()
       if(jentry %1000 == 0)
 	std::cout << "Entry " << jentry << "/" << nent << std::endl;
 
+      // This is for the 2023 low-pileup run
+      if((LumiSection < 236) || (LumiSection > 709))
+      	continue;
+
       // Select events with 1 non-fake primary vertex, with <= 10 tracks
       if((nVertices > 1) || (PrimVertexIsBS[0] == 1) || (PrimVertexNtracks[0] > 10))
 	continue;
@@ -73,6 +92,8 @@ void TimingAnalysisMacro::Loop()
       npixeltracks56220 = 0;
       ntimetracks45 = 0;
       ntimetracks56 = 0;
+      ntimetracksbox45 = 0;
+      ntimetracksbox56 = 0;
 
       pixelx45210 = 0.0;
       pixely45210 = 0.0;
@@ -88,6 +109,12 @@ void TimingAnalysisMacro::Loop()
       time56 = -999.0;
       timeunc45 = -999.0;
       timeunc56 = -999.0;
+      timingxbox45 = 0.0;
+      timingxbox56 = 0.0;
+      timebox45 = -999.0;
+      timebox56 = -999.0;
+      timeuncbox45 = -999.0;
+      timeuncbox56 = -999.0;
 
       // Loop over all of the local "lite" tracks in each Roman Pot station. 
       // Record the multiplicity, the x,y coordinates in the 210m pixel stations on sectors 45 (+z) and 56 (-z), 
@@ -136,39 +163,78 @@ void TimingAnalysisMacro::Loop()
               timeunc56 = TrackLiteTimeUnc[ptrack];
 	      ntimetracks56++;
             }
+          if(TrackLiteRPID[ptrack] == 22)
+            {
+              timingxbox45 = TrackLiteX[ptrack];
+              timebox45 = TrackLiteTime[ptrack];
+              timeuncbox45 = TrackLiteTimeUnc[ptrack];
+              ntimetracksbox45++;
+            }
+          if(TrackLiteRPID[ptrack] == 122)
+            {
+              timingxbox56 = TrackLiteX[ptrack];
+              timebox56 = TrackLiteTime[ptrack];
+              timeuncbox56 = TrackLiteTimeUnc[ptrack];
+              ntimetracksbox56++;
+            }
+
 	}
 
-      // For the final sample, use events with exactly 1 track in each of the 210m pixels, and 1 track in each of the diamonds
-      if((npixeltracks45220==1) && (npixeltracks56220==1) && (npixeltracks45210==1) && (npixeltracks56210==1) && 
-	 (ntimetracks45==1) && (ntimetracks56==1))
+      // For the final sample, use events with exactly 1 track in each of the 210+220m pixels, and 1 track in the diamonds on each arm
+      // FIXME: For now, we treat the 2-arm combinations cylindrical-cylindrical and box-box as 2 separate cases. 
+      if((npixeltracks45220==1) && (npixeltracks56220==1) && (npixeltracks45210==1) && (npixeltracks56210==1))
 	{
-	  // Time measurement on each arm
-	  timevstime->Fill(time45,time56);
+	  // 2d maps of pixel tracks                                                                                                                                                     
+	  xypixels45->Fill(pixelx45220,pixely45220);
+	  xypixels56->Fill(pixelx56220,pixely56220);
 
-	  // Matching between x position of pixel and diamond tracks
-	  dxpixelstiming45->Fill(pixelx45210-timingx45);
-	  dxpixelstiming56->Fill(pixelx56210-timingx56);
+	  if((ntimetracks45==1) && (ntimetracks56==1))
+	    {
+	      // Time measurement on each arm
+	      timevstime->Fill(time45,time56);
+	      
+	      // Matching between x position of pixel and diamond tracks
+	      dxpixelstiming45->Fill(pixelx45220-timingx45);
+	      dxpixelstiming56->Fill(pixelx56220-timingx56);
+	      
+	      // 2d correlation of x position in pixels and x position in diamonds
+	      xx45->Fill(pixelx45220,timingx45);
+	      xx56->Fill(pixelx56220,timingx56);
+	      
+	      // Scatter plot of vertex Z vs. proton time difference
+	      zvtxvstimediff->Fill(PrimVertexZ[0],time56-time45);
+	      // Projection of vertex Z minus proton time difference (converted from ns to cm)
+	      zminustimediff->Fill(PrimVertexZ[0] - (time56-time45)/cmtons);
+	      
+	      // Store the predicted track-by-track time uncertainties, based on which channels 
+	      // contribute to the track
+	      htimeunc45->Fill(timeunc45);
+	      htimeunc56->Fill(timeunc56);
+	    }
+          if((ntimetracksbox45==1) && (ntimetracksbox56==1))
+            {
+              // Time measurement on each arm                                                                                                                                              
+              timevstimebox->Fill(timebox45,timebox56);
 
-	  // 2d correlation of x position in pixels and x position in diamonds
-	  xx45->Fill(pixelx45210,timingx45);
-	  xx56->Fill(pixelx56210,timingx56);
-	  
-	  // 2d maps of pixel tracks
-	  xypixels45->Fill(pixelx45210,pixely45210);
-	  xypixels56->Fill(pixelx56210,pixely56210);
+              // Matching between x position of pixel and diamond tracks                                                                                                                   
+              dxpixelstimingbox45->Fill(pixelx45220-timingxbox45);
+              dxpixelstimingbox56->Fill(pixelx56220-timingxbox56);
 
-	  // Scatter plot of vertex Z vs. proton time difference
-	  zvtxvstimediff->Fill(PrimVertexZ[0],time56-time45);
-	  // Projection of vertex Z minus proton time difference (converted from ns to cm)
-	  zminustimediff->Fill(PrimVertexZ[0] - (time56-time45)/cmtons);
+              // 2d correlation of x position in pixels and x position in diamonds                                                                                                         
+              xxbox45->Fill(pixelx45220,timingxbox45);
+              xxbox56->Fill(pixelx56220,timingxbox56);
 
-	  // Store the predicted track-by-track time uncertainties, based on which channels 
-	  // contribute to the track
-	  htimeunc45->Fill(timeunc45);
-          htimeunc56->Fill(timeunc56);
+              // Scatter plot of vertex Z vs. proton time difference                                                                                                                       
+              zvtxvstimediffbox->Fill(PrimVertexZ[0],timebox56-timebox45);
+              // Projection of vertex Z minus proton time difference (converted from ns to cm)                                                                                             
+              zminustimediffbox->Fill(PrimVertexZ[0] - (timebox56-timebox45)/cmtons);
 
+              // Store the predicted track-by-track time uncertainties, based on which channels                                                                                            
+              // contribute to the track                                                                                                                                                   
+              htimeuncbox45->Fill(timeuncbox45);
+              htimeuncbox56->Fill(timeuncbox56);
+            }
 	}
-
       // Finally, to check the channel-by-channel time alignment, just plot the RecHit arrival time for 
       // each channel with no selection
       for(Int_t rh = 0; rh < nRecHitsTiming; rh++)
@@ -184,17 +250,30 @@ void TimingAnalysisMacro::Loop()
    }
 
    TFile *fx = new TFile("TimingHistograms.root","RECREATE");
+   xypixels45->Write();
+   xypixels56->Write();
+
    dxpixelstiming45->Write();
    dxpixelstiming56->Write();
    xx45->Write();
    xx56->Write();
-   xypixels45->Write();
-   xypixels56->Write();
    zvtxvstimediff->Write();
    zminustimediff->Write();
    htimeunc45->Write();
    htimeunc56->Write();
    timevstime->Write();
+
+   dxpixelstimingbox45->Write();
+   dxpixelstimingbox56->Write();
+   xxbox45->Write();
+   xxbox56->Write();
+   zvtxvstimediffbox->Write();
+   zminustimediffbox->Write();
+   htimeuncbox45->Write();
+   htimeuncbox56->Write();
+   timevstimebox->Write();
+
+
    channeltimes->Write();
    fx->Close();
 
