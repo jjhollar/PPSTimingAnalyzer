@@ -22,7 +22,7 @@ cd PPSTimingAnalyzer/PPSTimingAnalyzer/test
 cmsRun RunTimingAnalysis_cfg.py
 
    * By default, this does a re-RECO on-the-fly from the AOD, and keeps only events with 1 vertex.
-     To change this to use the existing collections from the AOD, see the comments in the cfg file.
+     To change this to use the existing collections from the AOD, set "DORERECO = False". 
      To pick up new test calibrations from an sqlite file, see the comments in the cfg file
 
 ---------------------------------------------------
